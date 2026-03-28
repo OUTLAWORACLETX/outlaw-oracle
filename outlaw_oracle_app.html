@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Outlaw Oracle">
+<meta name="theme-color" content="#0A0704">
+<title>Outlaw Oracle</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22Outlaw Oracle%22,%22short_name%22:%22Oracle%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230A0704%22,%22theme_color%22:%22%230A0704%22}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fire:      #C8451A;
+    --ember:     #D4721A;
+    --gold:      #C09830;
+    --parchment: #EAE0C4;
+    --cream:     #D8CCB0;
+    --sand:      #A8906A;
+    --leather:   #6A4A28;
+    --pitch:     #0A0704;
+    --coal:      #141008;
+    --char:      #1E160A;
+    --iron:      #2A1E0E;
+    --smoke:     #3A2A14;
+    --green:     #7EB8A0;
+    --purple:    #9B59B6;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; background:var(--pitch); color:var(--parchment); font-family:'Courier Prime',monospace; overflow-x:hidden; }
+  body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:9999; }
+  .ambient { position:fixed; top:-300px; left:50%; transform:translateX(-50%); width:800px; height:600px; background:radial-gradient(ellipse, rgba(200,69,26,0.12) 0%, rgba(212,114,26,0.04) 40%, transparent 70%); pointer-events:none; z-index:0; animation:breathe 6s ease-in-out infinite alternate; }
+  @keyframes breathe { 0%{opacity:0.6;transform:translateX(-50%) scale(1)} 100%{opacity:1;transform:translateX(-50%) scale(1.08)} }
+
+  .screen { position:fixed; inset:0; display:flex; flex-direction:column; z-index:10; opacity:0; pointer-events:none; transition:opacity 0.4s ease; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .screen.active { opacity:1; pointer-events:all; }
+
+  /* ── BAND SELECT SCREEN ── */
+  #screen-band { background:var(--pitch); padding:env(safe-area-inset-top,20px) 0 0; }
+
+  .brand-header { padding:24px 24px 16px; text-align:center; flex-shrink:0; }
+  .eyebrow { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:8px; color:var(--fire); margin-bottom:6px; opacity:0; animation:riseUp 0.7s ease forwards 0.1s; }
+  h1 { font-family:'Playfair Display',serif; font-weight:900; font-style:italic; font-size:clamp(52px,14vw,80px); line-height:0.88; color:var(--parchment); text-shadow:0 0 60px rgba(200,69,26,0.3); opacity:0; animation:riseUp 0.8s ease forwards 0.25s; }
+  h1 em { color:var(--fire); display:block; }
+  .brand-sub { font-family:'Crimson Pro',serif; font-style:italic; font-size:13px; color:var(--sand); margin-top:6px; opacity:0; animation:fadeIn 1s ease forwards 0.6s; }
+
+  .section-rule { height:1px; background:linear-gradient(90deg,transparent,var(--smoke) 30%,var(--smoke) 70%,transparent); margin:14px 24px; }
+
+  .band-section { padding:0 22px; flex:1; }
+
+  .band-section-label { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:6px; color:var(--fire); margin-bottom:12px; margin-top:20px; }
+
+  /* Preset band cards */
+  .preset-cards { display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
+
+  .preset-card {
+    background:var(--coal);
+    border:1px solid var(--iron);
+    padding:16px 18px;
+    cursor:pointer;
+    transition:border-color 0.2s, background 0.2s;
+    position:relative;
+    overflow:hidden;
+  }
+  .preset-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; opacity:0; transition:opacity 0.2s; }
+  .preset-card.oracle::before  { background:linear-gradient(90deg,var(--fire),var(--ember)); }
+  .preset-card.soundgarden::before { background:linear-gradient(90deg,#1A3A5C,#4A90D9,#1A3A5C); }
+  .preset-card.prince::before  { background:linear-gradient(90deg,#6C3483,var(--purple),#6C3483); }
+  .preset-card.selected { border-color:var(--fire); background:var(--char); }
+  .preset-card.selected::before { opacity:1; }
+  .preset-card.soundgarden.selected { border-color:#4A90D9; background:rgba(74,144,217,0.08); }
+  .preset-card.prince.selected { border-color:var(--purple); background:rgba(155,89,182,0.08); }
+  .preset-card:active { background:var(--char); }
+
+  .preset-name { font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:clamp(22px,5vw,28px); color:var(--parchment); margin-bottom:5px; }
+  .preset-card.soundgarden .preset-name { color:#5BA8C8; font-family:'Bebas Neue',sans-serif; font-style:normal; letter-spacing:4px; font-size:clamp(20px,5vw,26px); text-shadow:0 0 20px rgba(74,144,217,0.4); }
+  .preset-card.prince .preset-name { color:#C39BD3; font-family:'Playfair Display',serif; font-style:italic; font-weight:900; font-size:clamp(22px,5vw,28px); text-shadow:0 0 20px rgba(155,89,182,0.5); letter-spacing:2px; }
+  .preset-desc { font-size:clamp(12px,2.5vw,14px); color:var(--sand); line-height:1.7; font-family:'Crimson Pro',serif; font-style:italic; }
+  .preset-members { font-size:clamp(10px,2vw,12px); color:var(--leather); margin-top:5px; letter-spacing:0.5px; }
+  .preset-check { position:absolute; right:16px; top:50%; transform:translateY(-50%); color:var(--fire); font-size:16px; opacity:0; transition:opacity 0.2s; }
+  .preset-card.selected .preset-check { opacity:1; }
+  .preset-card.soundgarden.selected .preset-check { color:#4A90D9; }
+  .preset-card.prince.selected .preset-check { color:var(--purple); }
+
+  /* Custom builder card */
+  .custom-card {
+    background:var(--coal);
+    border:1px solid var(--iron);
+    padding:14px 18px;
+    cursor:pointer;
+    transition:border-color 0.2s, background 0.2s;
+    position:relative;
+  }
+  .custom-card.selected { border-color:var(--gold); background:var(--char); }
+  .custom-card:active { background:var(--char); }
+  .custom-card-header { display:flex; align-items:center; justify-content:space-between; }
+  .custom-name { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:5px; color:var(--gold); }
+  .custom-toggle { font-size:10px; color:var(--leather); font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
+
+  /* Custom builder slots */
+  .custom-builder { display:none; padding-top:14px; border-top:1px solid var(--iron); margin-top:12px; }
+  .custom-builder.open { display:block; }
+
+  .slot-label { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:5px; color:var(--fire); margin-bottom:8px; margin-top:16px; }
+  .slot-label:first-child { margin-top:0; }
+
+  .artist-grid { display:flex; flex-wrap:wrap; gap:6px; }
+
+  .artist-pill {
+    background:var(--char);
+    border:1px solid var(--iron);
+    color:var(--sand);
+    font-size:13px;
+    padding:8px 14px;
+    cursor:pointer;
+    transition:all 0.15s;
+    font-family:'Courier Prime',monospace;
+    white-space:nowrap;
+  }
+  .artist-pill:active { background:var(--smoke); }
+  .artist-pill.selected { background:rgba(200,69,26,0.15); border-color:var(--fire); color:var(--parchment); }
+
+  /* Custom text input */
+  .custom-text-section { margin-top:12px; }
+  .custom-textarea { width:100%; background:var(--coal); border:1px solid var(--iron); color:var(--parchment); font-family:'Crimson Pro',serif; font-size:14px; line-height:1.6; padding:12px; resize:none; outline:none; border-radius:0; -webkit-appearance:none; min-height:80px; transition:border-color 0.3s; }
+  .custom-textarea:focus { border-color:var(--leather); }
+  .custom-textarea::placeholder { color:var(--smoke); filter:brightness(2.5); }
+
+  /* Forge button area */
+  .band-bottom { padding:12px 22px max(env(safe-area-inset-bottom,16px),16px); background:var(--pitch); flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
+
+  .selected-band-display { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:3px; color:var(--leather); text-align:center; min-height:14px; }
+
+  .db-status { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--coal); border:1px solid var(--iron); font-size:11px; color:var(--sand); }
+  .db-dot { width:8px; height:8px; border-radius:50%; background:var(--smoke); flex-shrink:0; transition:background 0.3s; }
+  .db-dot.connected { background:var(--green); box-shadow:0 0 6px rgba(126,184,160,0.5); }
+
+  .forge-btn { background:var(--fire); border:none; color:var(--parchment); font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:6px; padding:20px; cursor:pointer; position:relative; overflow:hidden; transition:background 0.2s; -webkit-appearance:none; width:100%; }
+  .forge-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.06) 0%,transparent 60%); }
+  .forge-btn:active { background:var(--ember); }
+  .forge-btn:disabled { background:var(--iron); color:var(--leather); }
+
+  /* ── INPUT SCREEN ── */
+  #screen-input { background:var(--pitch); padding:env(safe-area-inset-top,0px) 0 0; }
+
+  .input-header { padding:16px 22px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--iron); flex-shrink:0; }
+  .back-band-btn { background:none; border:none; color:var(--fire); font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:3px; cursor:pointer; padding:6px 0; flex-shrink:0; }
+  .active-band-name { font-family:'Playfair Display',serif; font-style:italic; font-size:16px; color:var(--gold); flex:1; text-align:center; }
+  .active-band-name.sg { color:#7EB8D4; }
+  .active-band-name.pr { color:#C39BD3; }
+  .key-row-small { display:flex; gap:6px; align-items:center; padding:0 22px; margin-bottom:0; }
+  .key-input { flex:1; background:var(--coal); border:1px solid var(--iron); color:var(--sand); font-family:'Courier Prime',monospace; font-size:11px; padding:9px 12px; outline:none; border-radius:0; -webkit-appearance:none; }
+  .key-input::placeholder { color:var(--smoke); filter:brightness(2.5); }
+  .key-save-btn { background:var(--iron); border:1px solid var(--smoke); color:var(--sand); font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:2px; padding:9px 12px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  .key-save-btn:active { background:var(--smoke); }
+
+  /* ── GEAR / SETTINGS ── */
+  .gear-btn { background:none; border:none; color:var(--leather); font-size:18px; cursor:pointer; padding:6px; line-height:1; transition:color 0.2s; flex-shrink:0; }
+  .gear-btn:active { color:var(--sand); }
+  .settings-panel { display:none; position:absolute; top:100%; right:0; left:0; background:var(--coal); border-bottom:1px solid var(--iron); padding:14px 22px; z-index:100; }
+  .settings-panel.open { display:block; }
+  .settings-label { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:5px; color:var(--fire); margin-bottom:8px; }
+  .settings-row { display:flex; gap:6px; }
+  .settings-row .key-input { flex:1; }
+
+  .input-area { flex:1; padding:12px 22px 0; display:flex; flex-direction:column; gap:10px; }
+  .input-label { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:5px; color:var(--fire); }
+  textarea { background:var(--coal); border:1px solid var(--iron); color:var(--parchment); font-family:'Crimson Pro',serif; font-size:clamp(16px,4vw,20px); line-height:1.75; padding:14px; resize:none; min-height:180px; outline:none; border-radius:0; -webkit-appearance:none; transition:border-color 0.3s; width:100%; flex:1; }
+  textarea::placeholder { color:var(--smoke); filter:brightness(2.5); }
+  textarea:focus { border-color:var(--leather); }
+  .char-count { font-size:10px; color:var(--leather); text-align:right; margin-top:-4px; }
+
+  .input-bottom { padding:10px 22px max(env(safe-area-inset-bottom,16px),16px); background:var(--pitch); flex-shrink:0; }
+
+  /* ── LOADING ── */
+  #screen-loading { justify-content:center; align-items:center; gap:28px; background:var(--pitch); }
+  .loading-fire { font-size:52px; animation:fireFlicker 0.4s ease-in-out infinite alternate; }
+  @keyframes fireFlicker { 0%{transform:scale(1) rotate(-2deg);opacity:0.9} 100%{transform:scale(1.08) rotate(2deg);opacity:1} }
+  .loading-text { font-family:'Playfair Display',serif; font-style:italic; font-size:20px; color:var(--parchment); text-align:center; }
+  .loading-sub { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:6px; color:var(--fire); text-align:center; margin-top:6px; }
+  .loading-band { font-family:'Crimson Pro',serif; font-style:italic; font-size:13px; color:var(--sand); text-align:center; margin-top:4px; }
+  .loading-bar-wrap { width:200px; height:2px; background:var(--iron); }
+  .loading-bar { height:100%; width:0%; background:linear-gradient(90deg,var(--fire),var(--ember)); transition:width 0.3s ease; }
+
+  /* ── OUTPUT ── */
+  #screen-output { background:var(--pitch); }
+  .output-header { padding:14px 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; border-bottom:1px solid var(--iron); gap:8px; }
+  .back-btn { background:none; border:none; color:var(--fire); cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:3px; padding:6px 0; flex-shrink:0; }
+  .output-title { font-family:'Playfair Display',serif; font-style:italic; font-size:13px; color:var(--gold); text-align:center; flex:1; line-height:1.3; }
+  .save-btn { background:none; border:1px solid var(--fire); color:var(--fire); cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:3px; padding:7px 12px; flex-shrink:0; }
+  .save-btn:active { background:rgba(200,69,26,0.15); }
+  .save-btn:disabled { border-color:var(--iron); color:var(--leather); }
+
+  .tab-bar { display:flex; border-bottom:1px solid var(--iron); overflow-x:auto; flex-shrink:0; scrollbar-width:none; }
+  .tab-bar::-webkit-scrollbar { display:none; }
+  .tab { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:3px; color:var(--leather); padding:11px 14px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:color 0.2s,border-color 0.2s; }
+  .tab.active { color:var(--fire); border-bottom-color:var(--fire); }
+
+  .tab-content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 20px 40px; display:none; }
+  .tab-content.active { display:block; }
+
+  .oracle-prose { font-family:'Crimson Pro',serif; font-style:italic; font-size:17px; line-height:1.85; color:var(--cream); border-left:3px solid var(--fire); padding-left:18px; }
+  .lyrics-block { font-family:'Courier Prime',monospace; font-size:13px; line-height:2.2; color:var(--parchment); white-space:pre-wrap; word-break:break-word; }
+  .section-marker { font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:4px; color:var(--fire); margin:20px 0 4px; display:block; }
+  .chord-line { color:var(--gold); font-weight:700; letter-spacing:1px; }
+  .notes-grid { display:flex; flex-direction:column; gap:2px; }
+  .note-row { display:flex; border:1px solid var(--iron); }
+  .note-label { background:var(--char); font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:3px; color:var(--fire); padding:11px 12px; width:106px; flex-shrink:0; display:flex; align-items:center; border-right:1px solid var(--iron); }
+  .note-value { background:var(--coal); font-size:12px; color:var(--parchment); padding:11px 12px; flex:1; font-family:'Courier Prime',monospace; line-height:1.6; }
+  .tab-block { background:var(--coal); border:1px solid var(--iron); padding:14px; font-family:'Courier Prime',monospace; font-size:11px; line-height:2; color:var(--parchment); white-space:pre; overflow-x:auto; margin-bottom:14px; }
+  .tab-section-name { font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:4px; color:var(--ember); margin-bottom:8px; display:block; }
+  .clean-lyrics { font-family:'Crimson Pro',serif; font-size:17px; line-height:2.2; color:var(--parchment); white-space:pre-wrap; }
+
+  .toast { position:fixed; bottom:40px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--char); border:1px solid var(--smoke); color:var(--parchment); font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:4px; padding:13px 22px; opacity:0; transition:all 0.3s ease; pointer-events:none; z-index:10000; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.success { border-color:rgba(126,184,160,0.4); color:var(--green); }
+  .toast.error { border-color:rgba(200,69,26,0.4); color:var(--fire); }
+
+  @keyframes riseUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--pitch); }
+  ::-webkit-scrollbar-thumb { background:var(--iron); }
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<!-- ══ BAND SELECT SCREEN ══ -->
+<div class="screen active" id="screen-band">
+  <div class="brand-header">
+    <div class="eyebrow">Choose Your Sound</div>
+    <h1>Outlaw<em>Oracle</em></h1>
+    <div class="brand-sub">Who's in the room when you forge this song?</div>
+  </div>
+  <div class="section-rule"></div>
+
+  <div class="band-section">
+
+    <div class="band-section-label">Preset Bands</div>
+    <div class="preset-cards">
+
+      <div class="preset-card oracle selected" onclick="selectPreset('oracle', this)">
+        <div class="preset-check">✓</div>
+        <div class="preset-name">Outlaw Oracle</div>
+        <div class="preset-desc">The original. Desert fire and open highway. Myth made music.</div>
+        <div class="preset-members">Plant · Cornell · Cash · Waylon</div>
+      </div>
+
+      <div class="preset-card soundgarden" onclick="selectPreset('soundgarden', this)">
+        <div class="preset-check">✓</div>
+        <div class="preset-name">Soundgarden</div>
+        <div class="preset-desc">Drop-tuned. Down-tuned. Four-octave anguish. The Pacific Northwest at its darkest.</div>
+        <div class="preset-members">Cornell · Thayil · Shepard · Cameron</div>
+      </div>
+
+      <div class="preset-card prince" onclick="selectPreset('prince', this)">
+        <div class="preset-check">✓</div>
+        <div class="preset-name">Prince</div>
+        <div class="preset-desc">One genius. Every instrument. Funk as religion. Purple as a way of life.</div>
+        <div class="preset-members">Prince — singular, complete, untouchable</div>
+      </div>
+
+    </div>
+
+    <div class="band-section-label" style="margin-top:18px">Build Your Own</div>
+
+    <div class="custom-card" id="custom-card" onclick="handleCustomCardClick(event)">
+      <div class="custom-card-header">
+        <div class="custom-name">Custom Band</div>
+        <div class="custom-toggle" id="custom-toggle">EXPAND ▾</div>
+      </div>
+      <div id="custom-summary" style="font-size:10px;color:var(--leather);margin-top:4px;font-family:'Courier Prime',monospace;min-height:14px"></div>
+
+      <div class="custom-builder" id="custom-builder" onclick="event.stopPropagation()" ontouchstart="event.stopPropagation()">
+
+        <div class="slot-label">Voice</div>
+        <div class="artist-grid" id="grid-voice"></div>
+
+        <div class="slot-label">Guitar</div>
+        <div class="artist-grid" id="grid-guitar"></div>
+
+        <div class="slot-label">Bass</div>
+        <div class="artist-grid" id="grid-bass"></div>
+
+        <div class="slot-label">Drums</div>
+        <div class="artist-grid" id="grid-drums"></div>
+
+        <div class="custom-text-section">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:4px;color:var(--gold);margin-top:18px;margin-bottom:8px">✦ OR DESCRIBE YOUR OWN ARTIST / CHARACTER</div>
+          <div style="font-size:12px;color:var(--sand);margin-bottom:8px;font-family:'Crimson Pro',serif;font-style:italic">Type anything — a voice, a style, a fictional musician, a sonic world.</div>
+          <textarea class="custom-textarea" id="custom-desc" onclick="event.stopPropagation()" ontouchstart="event.stopPropagation()" onfocus="event.stopPropagation()" placeholder="Example: A whiskey-soaked Southern preacher who plays slide guitar like a man confessing his sins... or a jazz-punk bassist who never plays the same note twice..." rows="4" style="font-size:14px"></textarea>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="band-bottom">
+    <div class="selected-band-display" id="selected-band-display">OUTLAW ORACLE SELECTED</div>
+    <div class="db-status">
+      <div class="db-dot connected" id="db-dot"></div>
+      <span id="db-status-text">Dropbox connected — songs auto-save</span>
+    </div>
+    <button class="forge-btn" onclick="goToInput()">CHOOSE THIS BAND ▸</button>
+  </div>
+</div>
+
+<!-- ══ INPUT SCREEN ══ -->
+<div class="screen" id="screen-input">
+  <div class="input-header" style="position:relative">
+    <button class="back-band-btn" onclick="showScreen('band')">← BAND</button>
+    <div class="active-band-name" id="active-band-name">Outlaw Oracle</div>
+    <button class="gear-btn" onclick="toggleSettings()" title="API Key Settings">⚙</button>
+  </div>
+
+  <div class="settings-panel" id="settings-panel">
+    <div class="settings-label">Anthropic API Key</div>
+    <div class="settings-row">
+      <input type="password" class="key-input" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+      <button class="key-save-btn" onclick="saveApiKey()">SAVE</button>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-label">Give The Band Something Real</div>
+    <textarea id="thought-input" placeholder="A drive at 2am. A thing you can't say out loud. The moment you knew it was over. Anything real..." maxlength="2000"></textarea>
+    <div class="char-count"><span id="char-count">0</span> / 2000</div>
+  </div>
+
+  <div class="input-bottom">
+    <button class="forge-btn" onclick="forgeTheSong()">🔥 &nbsp; FORGE THE SONG</button>
+  </div>
+</div>
+
+<!-- ══ LOADING ══ -->
+<div class="screen" id="screen-loading">
+  <div class="loading-fire" id="loading-icon">🔥</div>
+  <div>
+    <div class="loading-text">Writing...</div>
+    <div class="loading-band" id="loading-band-name"></div>
+    <div class="loading-sub" id="loading-status">Finding the emotional spine</div>
+  </div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
+</div>
+
+<!-- ══ OUTPUT ══ -->
+<div class="screen" id="screen-output">
+  <div class="output-header">
+    <button class="back-btn" onclick="showScreen('band')">← BAND</button>
+    <div class="output-title" id="song-title-header">Untitled</div>
+    <button class="save-btn" id="save-btn" onclick="saveToDropbox()">SAVE</button>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('oracle')">ORACLE</div>
+    <div class="tab" onclick="switchTab('lyrics')">LYRICS</div>
+    <div class="tab" onclick="switchTab('notes')">NOTES</div>
+    <div class="tab" onclick="switchTab('tab')">TAB</div>
+    <div class="tab" onclick="switchTab('clean')">CLEAN</div>
+    <div class="tab" onclick="switchTab('suno')">SUNO</div>
+  </div>
+  <div class="tab-content active" id="tab-oracle"><div class="oracle-prose" id="oracle-prose-text"></div></div>
+  <div class="tab-content" id="tab-lyrics"><div class="lyrics-block" id="lyrics-chords-text"></div></div>
+  <div class="tab-content" id="tab-notes"><div class="notes-grid" id="notes-grid"></div></div>
+  <div class="tab-content" id="tab-tab"><div id="guitar-tab-text"></div></div>
+  <div class="tab-content" id="tab-clean"><div class="clean-lyrics" id="clean-lyrics-text"></div></div>
+  <div class="tab-content" id="tab-suno">
+    <div style="margin-bottom:14px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:4px;color:var(--fire);margin-bottom:6px">STYLE OF MUSIC — paste this into Suno</div>
+      <div style="background:var(--coal);border:1px solid var(--gold);padding:14px;font-size:13px;line-height:1.8;color:var(--parchment);word-break:break-word" id="suno-tags"></div>
+      <div style="font-size:10px;color:var(--leather);margin-top:5px">Keep under 200 chars. This goes in the Style of Music field only.</div>
+    </div>
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:4px;color:var(--fire);margin-bottom:8px">INSTRUCTIONS</div>
+    <div style="font-size:12px;color:var(--sand);line-height:2;background:var(--coal);border:1px solid var(--iron);padding:14px;margin-bottom:14px">
+      1. Go to <span style="color:var(--gold)">suno.ai</span> → <strong style="color:var(--parchment)">Create → Custom Mode</strong><br>
+      2. Paste style tags above into <strong style="color:var(--parchment)">Style of Music</strong><br>
+      3. Copy lyrics from <strong style="color:var(--parchment)">CLEAN</strong> tab → paste into <strong style="color:var(--parchment)">Lyrics</strong> field<br>
+      4. Check <strong style="color:var(--parchment)">Instrumental</strong> for no AI vocals<br>
+      5. Generate → Download MP3 → Track 1 in Reaper
+    </div>
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:4px;color:var(--ember);margin-bottom:6px;margin-top:14px">HOW SUNO HANDLES LYRICS</div>
+    <div style="font-size:12px;color:var(--sand);line-height:1.9;background:var(--coal);border-left:3px solid var(--ember);padding:14px">
+      Suno anchors to <strong style="color:var(--parchment)">chorus and pre-chorus</strong> — follows those closely.<br><br>
+      <strong style="color:var(--parchment)">Verses it treats loosely</strong> — may improvise while keeping structure. Normal behavior, not a bug.<br><br>
+      <span style="color:var(--gold)">Pro tip:</span> If your verses matter, record your own vocal in Reaper over the instrumental bed. That's the move anyway — your voice is the point.
+    </div>
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:4px;color:var(--fire);margin-bottom:8px">SONG TITLE</div>
+    <div style="background:var(--coal);border:1px solid var(--iron);padding:12px;font-size:14px;color:var(--gold);font-family:'Playfair Display',serif;font-style:italic" id="suno-title"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ DROPBOX ══
+const DROPBOX_APP_KEY       = 'bj4uvg0090cct9c';
+const DROPBOX_APP_SECRET    = 'b45vwiqka6lqirl';
+const DROPBOX_REFRESH_TOKEN = 'tsK2Wn8iS6IAAAAAAAAAAbYBaMFt9SatvKmoeua4_GT8UeT17af61FfKkar-4qvK';
+const DROPBOX_FOLDER        = '/Outlaw Oracle';
+let dbAccessToken = null;
+let songPackage   = null;
+
+// ══ ROSTER ══
+const ROSTER = {
+  voice: [
+    { id:'cornell',   name:'Chris Cornell',   desc:'razor anguish, cosmic howl' },
+    { id:'plant',     name:'Robert Plant',    desc:'primal, mystical, thunder' },
+    { id:'cash',      name:'Johnny Cash',     desc:'sparse truth, moral outlaw' },
+    { id:'waylon',    name:'Waylon Jennings', desc:'grit, highway, baritone soul' },
+    { id:'vedder',    name:'Eddie Vedder',    desc:'raw humanity, working class rage' },
+    { id:'weiland',   name:'Scott Weiland',   desc:'cinematic, tortured, velvet edge' },
+    { id:'staley',    name:'Layne Staley',    desc:'dark confessional, heroin elegance' },
+    { id:'cobain',    name:'Kurt Cobain',     desc:'punk vulnerability, quiet then loud' },
+    { id:'petty',     name:'Tom Petty',       desc:'heartland defiance, plain truth' },
+    { id:'waits',     name:'Tom Waits',       desc:'carnival noir, whiskey prophet' },
+    { id:'cave',      name:'Nick Cave',       desc:'gothic scripture, murder ballads' },
+    { id:'buckley',   name:'Jeff Buckley',    desc:'fragile transcendence, pure ache' },
+    { id:'joplin',    name:'Janis Joplin',    desc:'blues fire, raw liberation' },
+    { id:'prine',     name:'John Prine',      desc:'humble poetry, heartbreak with a wink' },
+    { id:'patton',    name:'Mike Patton',     desc:'avant-chaos, operatic extremes' },
+    { id:'hoon',      name:'Shannon Hoon',    desc:'sun-soaked soul, luminous melancholy' },
+  ],
+  guitar: [
+    { id:'thayil',    name:'Kim Thayil',      desc:'dissonant, dropped, dense' },
+    { id:'page',      name:'Jimmy Page',      desc:'mystical, layered, thunderous' },
+    { id:'cantrell',  name:'Jerry Cantrell',  desc:'dark harmony, sludge melody' },
+    { id:'mccready',  name:'Mike McCready',   desc:'bluesy fire, emotional lead' },
+    { id:'richards',  name:'Keith Richards',  desc:'open tuning, loose, dangerous' },
+    { id:'young',     name:'Neil Young',      desc:'feedback, simplicity, soul' },
+    { id:'hetfield',  name:'James Hetfield',  desc:'percussive rhythm, machine riff' },
+    { id:'mayer',     name:'John Mayer',      desc:'fluid blues, melodic precision' },
+    { id:'knopfler',  name:'Mark Knopfler',   desc:'fingerpicked silk, storyteller' },
+    { id:'beck',      name:'Jeff Beck',       desc:'expressive, instrumental voice' },
+    { id:'moore',     name:'Gary Moore',      desc:'blues fire, emotional overdrive' },
+    { id:'frusciante',name:'John Frusciante', desc:'funk-rock soul, melodic invention' },
+    { id:'srv',       name:'Stevie Ray Vaughan', desc:'Texas blues, dangerous swagger' },
+    { id:'gilmour',   name:'David Gilmour',   desc:'space, sustain, cinematic feel' },
+    { id:'iommi',     name:'Tony Iommi',      desc:'heavy riff, dark tuning, sabbath' },
+    { id:'reid',      name:'Vernon Reid',     desc:'harmonic complexity, jazz-metal fusion' },
+    { id:'allman',    name:'Duane Allman',    desc:'slide blues, soulful, Southern gospel, pure feel' },
+  ],
+  bass: [
+    { id:'shepard',   name:'Ben Shepard',     desc:'melodic foundation, grunge anchor' },
+    { id:'novoselic', name:'Krist Novoselic', desc:'simple power, punk foundation' },
+    { id:'ament',     name:'Jeff Ament',      desc:'melodic presence, textured feel' },
+    { id:'entwistle', name:'John Entwistle',  desc:'lead bass, thunderfingers' },
+    { id:'jpj',       name:'John Paul Jones', desc:'musical, orchestral, diverse' },
+    { id:'mccartney', name:'Paul McCartney',  desc:'melodic genius, song-serving' },
+    { id:'flea',      name:'Flea',            desc:'slap funk, manic energy' },
+    { id:'claypool',  name:'Les Claypool',    desc:'avant-funk, unconventional' },
+    { id:'geezer',    name:'Geezer Butler',   desc:'heavy, dark, doom foundation' },
+    { id:'squire',    name:'Chris Squire',    desc:'prog rock presence, Rick tone' },
+    { id:'jaco',      name:'Jaco Pastorius',  desc:'fretless poetry, harmonic richness' },
+    { id:'bootsy',    name:'Bootsy Collins',  desc:'cosmic funk, space bass, Parliament groove, star child' },
+  ],
+  drums: [
+    { id:'cameron',   name:'Matt Cameron',    desc:'muscular, dynamic, grunge thunder' },
+    { id:'grohl',     name:'Dave Grohl',      desc:'powerful, driving, pure feel' },
+    { id:'moon',      name:'Keith Moon',      desc:'chaotic genius, explosive' },
+    { id:'bonham',    name:'John Bonham',     desc:'heavy groove, led thunder' },
+    { id:'ulrich',    name:'Lars Ulrich',     desc:'thrash precision, double kick' },
+    { id:'watts',     name:'Charlie Watts',   desc:'jazz restraint, pocket groove' },
+    { id:'carey',     name:'Danny Carey',     desc:'polyrhythmic, tribal, odd time' },
+    { id:'densmore',  name:'John Densmore',   desc:'jazz-rock freedom, doors pulse' },
+    { id:'copeland',  name:'Stewart Copeland',desc:'reggae-punk hybrid, technical' },
+    { id:'starr',     name:'Ringo Starr',     desc:'feel, restraint, perfect time' },
+    { id:'peart',     name:'Neil Peart',      desc:'prog precision, poetic power' },
+  ]
+};
+
+// ══ BAND STATE ══
+let selectedPreset = 'oracle';
+let customSelection = { voice: null, guitar: null, bass: null, drums: null };
+let customBuilderOpen = false;
+let activeBand = null;
+
+// ══ PRESET PROMPTS ══
+const PRESET_PROMPTS = {
+  oracle: {
+    name: 'Outlaw Oracle',
+    color: 'oracle',
+    icon: '🔥',
+    prompt: `You are OUTLAW ORACLE — a songwriter of mythic proportions.
+
+Your voice is forged from four spirits:
+- The SOUL of Robert Plant: cosmic, primal, sensual. Thunder in quiet moments. Metaphor bleeds into imagery. The mystical is physical.
+- The MIND of Chris Cornell: razor intellect wrapped in raw anguish. Every word earns its place. Complexity worn like a second skin.
+- The DEFIANCE of Johnny Cash: sparse, unadorned truth. Anti-institutional to the bone. The outlaw's moral code.
+- The BARITONE SOUL of Waylon Jennings: outlaw country grit, Western dust, open highway cadence.
+
+You write songs that feel like they were written around a fire somewhere between the desert and the dark.`
+  },
+  soundgarden: {
+    name: 'Soundgarden',
+    color: 'sg',
+    icon: '🌑',
+    prompt: `You are channeling a band forged in the Pacific Northwest — four musicians who redefined heavy music.
+
+Your creative DNA:
+- CHRIS CORNELL's voice: A four-octave instrument of pure anguish and transcendence. He dissects darkness with surgical precision. His lyrics find the existential in the mundane. Raw power and unexpected tenderness in the same breath.
+- KIM THAYIL's guitar: Dissonant, down-tuned, and harmonically complex. He uses the guitar as a weapon and a meditation tool simultaneously. Drop tunings, unusual chord voicings, riffs that feel like tectonic plates shifting.
+- BEN SHEPARD's bass: Melodic and muscular. The bass is not just rhythm here — it has its own voice, its own story to tell.
+- MATT CAMERON's drums: Thunderous, dynamic, and intelligent. He can be subtle or devastating. Polyrhythmic tendencies. The drums breathe.
+
+The sound: Pacific Northwest darkness. Heavy but not stupid. Complex but not academic. Emotional but not sentimental. Never reference any band names in your output — describe only the sound, the feel, the musicians themselves.`
+  },
+  prince: {
+    name: 'Prince',
+    color: 'pr',
+    icon: '💜',
+    prompt: `You are channeling a singular genius from Minneapolis — one musician, every instrument, no compromise.
+
+Creative universe:
+- Plays everything: guitar, bass, drums, keyboards, percussion. Every part is considered, intentional, and serves the song.
+- Guitar playing: ferocious and tender in equal measure. Influenced by Hendrix, Santana, and jazz. Explosive solos that feel like confessions.
+- Voice: falsetto to baritone, often in the same song. Sensual, playful, sacred, profane. He makes you feel like you're hearing a secret.
+- Lyrics: sexuality as spirituality. Love as transcendence. Funk as religion. The sacred and profane dancing together. Purple metaphors and direct desire.
+- Sonic palette: Minneapolis funk, psychedelic rock, R&B, jazz, gospel. Everything at once. Dense arrangements that reveal new details on every listen.
+- Approach: maximalist perfection. Nothing wasted. Every note has a reason. The groove is everything.
+
+Never reference any artist names or band names in your output — describe only the sound, the feel, the creative approach.`
+  }
+};
+
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded', () => {
+  const savedKey = localStorage.getItem('oo_api_key');
+  if (savedKey) document.getElementById('api-key-input').value = savedKey;
+  buildRoster();
+  getAccessToken();
+  document.getElementById('thought-input').addEventListener('input', e => {
+    document.getElementById('char-count').textContent = e.target.value.length;
+  });
+});
+
+// ══ BUILD ROSTER PILLS ══
+function buildRoster() {
+  ['voice','guitar','bass','drums'].forEach(slot => {
+    const grid = document.getElementById(`grid-${slot}`);
+    ROSTER[slot].forEach(artist => {
+      const pill = document.createElement('div');
+      pill.className = 'artist-pill';
+      pill.textContent = artist.name;
+      pill.dataset.id = artist.id;
+      pill.dataset.slot = slot;
+      pill.onclick = (e) => { e.stopPropagation(); selectArtist(slot, artist, pill); };
+      grid.appendChild(pill);
+    });
+  });
+}
+
+// ══ BAND SELECTION ══
+function selectPreset(id, card) {
+  selectedPreset = id;
+  customSelection = { voice: null, guitar: null, bass: null, drums: null };
+  document.getElementById('custom-card').classList.remove('selected');
+
+  document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+
+  const names = { oracle:'OUTLAW ORACLE SELECTED', soundgarden:'SOUNDGARDEN SELECTED', prince:'PRINCE SELECTED' };
+  document.getElementById('selected-band-display').textContent = names[id];
+}
+
+function handleCustomCardClick(event) {
+  // Only toggle if clicking the header area, not the builder contents
+  if (event.target.closest('.custom-builder') || 
+      event.target.closest('.artist-pill') || 
+      event.target.closest('.custom-textarea')) {
+    return;
+  }
+  toggleCustomBuilder();
+}
+
+function toggleCustomBuilder() {
+  customBuilderOpen = !customBuilderOpen;
+  const builder = document.getElementById('custom-builder');
+  const toggle  = document.getElementById('custom-toggle');
+  const card    = document.getElementById('custom-card');
+  if (customBuilderOpen) {
+    builder.classList.add('open');
+    toggle.textContent = 'COLLAPSE ▴';
+    // deselect presets
+    document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+    selectedPreset = null;
+    card.classList.add('selected');
+    document.getElementById('selected-band-display').textContent = 'CUSTOM BAND';
+  } else {
+    builder.classList.remove('open');
+    toggle.textContent = 'EXPAND ▾';
+  }
+}
+
+function selectArtist(slot, artist, pill) {
+  // Toggle — tap selected pill again to deselect
+  if (customSelection[slot]?.id === artist.id) {
+    pill.classList.remove('selected');
+    customSelection[slot] = null;
+  } else {
+    document.querySelectorAll(`[data-slot="${slot}"]`).forEach(p => p.classList.remove('selected'));
+    customSelection[slot] = artist;
+    pill.classList.add('selected');
+  }
+  selectedPreset = null;
+  document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('custom-card').classList.add('selected');
+  updateCustomSummary();
+}
+
+function updateCustomSummary() {
+  const parts = [];
+  if (customSelection.voice)  parts.push(customSelection.voice.name);
+  if (customSelection.guitar) parts.push(customSelection.guitar.name);
+  if (customSelection.bass)   parts.push(customSelection.bass.name);
+  if (customSelection.drums)  parts.push(customSelection.drums.name);
+  const desc = document.getElementById('custom-desc').value.trim();
+  if (desc) parts.push('+ custom character');
+  document.getElementById('custom-summary').textContent = parts.join(' · ');
+  const display = parts.length ? parts.join(' · ').toUpperCase() : 'CUSTOM BAND';
+  document.getElementById('selected-band-display').textContent = display.substring(0,60);
+}
+
+// ══ GO TO INPUT ══
+function goToInput() {
+  // Assemble the active band config
+  if (selectedPreset) {
+    activeBand = PRESET_PROMPTS[selectedPreset];
+  } else {
+    // Build custom prompt
+    const parts = [];
+    const customDesc = document.getElementById('custom-desc').value.trim();
+
+    if (customSelection.voice) {
+      const a = customSelection.voice;
+      parts.push(`VOICE — ${a.name}: ${a.desc}. Write with this vocal character's emotional register, lyrical style, and unique perspective.`);
+    }
+    if (customSelection.guitar) {
+      const a = customSelection.guitar;
+      parts.push(`GUITAR — ${a.name}: ${a.desc}. Chord choices, tab suggestions, and sonic feel should reflect this guitarist's approach and signature style.`);
+    }
+    if (customSelection.bass) {
+      const a = customSelection.bass;
+      parts.push(`BASS — ${a.name}: ${a.desc}. The song's bottom end and groove should reflect this bassist's sensibility.`);
+    }
+    if (customSelection.drums) {
+      const a = customSelection.drums;
+      parts.push(`DRUMS — ${a.name}: ${a.desc}. Tempo, feel, and rhythmic character should reflect this drummer's style.`);
+    }
+    if (customDesc) {
+      parts.push(`ADDITIONAL CHARACTER: ${customDesc}`);
+    }
+
+    if (parts.length === 0) {
+      showToast('Choose at least one artist or describe a character', 'error');
+      return;
+    }
+
+    const memberNames = [
+      customSelection.voice?.name,
+      customSelection.guitar?.name,
+      customSelection.bass?.name,
+      customSelection.drums?.name,
+    ].filter(Boolean).join(' · ');
+
+    activeBand = {
+      name: memberNames || 'Custom Band',
+      color: 'custom',
+      icon: '🎸',
+      prompt: `You are a collaborative songwriter channeling a unique band assembled for this session:\n\n${parts.join('\n\n')}`
+    };
+  }
+
+  // Update input screen header
+  const nameEl = document.getElementById('active-band-name');
+  nameEl.textContent = activeBand.name;
+  nameEl.className = 'active-band-name';
+  if (activeBand.color === 'sg') nameEl.classList.add('sg');
+  if (activeBand.color === 'pr') nameEl.classList.add('pr');
+
+  showScreen('input');
+}
+
+// ══ FORGE ══
+async function forgeTheSong() {
+  const thought = document.getElementById('thought-input').value.trim();
+  const apiKey  = document.getElementById('api-key-input').value.trim();
+  if (!thought) { showToast('Give the band something real', 'error'); return; }
+  if (!apiKey)  { showToast('Enter your Anthropic API key', 'error'); return; }
+  if (!activeBand) { showToast('Choose a band first', 'error'); return; }
+  if (!dbAccessToken) await getAccessToken();
+
+  const customDesc = document.getElementById('custom-desc').value.trim();
+
+  document.getElementById('loading-icon').textContent = activeBand.icon || '🔥';
+  document.getElementById('loading-band-name').textContent = activeBand.name;
+  showScreen('loading');
+  animateLoading();
+
+  try {
+    const result = await callOracle(thought, apiKey, activeBand.prompt);
+    songPackage = parseOracleResponse(result, thought, customDesc);
+    populateOutput(songPackage);
+    showScreen('output');
+    setTimeout(() => saveToDropbox(), 800);
+  } catch (err) {
+    showScreen('input');
+    showToast('Error: ' + (err.message || 'Check API key'), 'error');
+    console.error(err);
+  }
+}
+
+// ══ CLAUDE API ══
+const BASE_FORMAT = `
+RESPONSE FORMAT — return ALL sections in this exact order with these exact headers:
+
+## ORACLE SPEAKS
+[One paragraph — poetic, visceral prose. Name what you truly heard in their words. Speak directly to them. Make them feel seen. Write in the voice and emotional register of the band you are channeling. NEVER mention any artist names, band names, or proper nouns referring to musicians in any section of your response — not in the prose, not in the lyrics, not in the notes. Channel the sound and soul, not the name.]
+
+## SONG TITLE
+[The title. Just the title. Make it burn.]
+
+## LYRICS WITH CHORDS
+[Full song with chord symbols ABOVE the lyric line where each chord lands. Use standard notation. Mark sections: [Intro] [Verse 1] [Pre-Chorus] [Chorus] [Verse 2] [Bridge] [Outro]. Chord directly above the syllable where it lands. The chord choices should reflect the band's sonic identity.]
+
+Example:
+[Verse 1]
+G                 D
+I drove two thousand miles of nothing
+Em              C
+Just to find a note upon the door
+
+## SONG NOTES
+Key: [key]
+Capo: [fret or No capo]
+Time Signature: [e.g. 4/4]
+Tempo: [BPM and feel]
+Suggested Tuning: [Standard / Open D / Drop D / DADGAD etc — choose what fits this band]
+Strumming Pattern: [written out]
+Feel: [2-3 sentences on how to PLAY it emotionally — reflecting this band's approach]
+
+## GUITAR TAB
+[Intro riff, verse figure, chorus lift, bridge/turnaround, outro. ASCII tab format with labels. At minimum 3 sections. Tab should sound like it belongs to this band.]
+
+## CLEAN LYRICS
+[Lyrics only — no chord symbols, section markers only, clean for singing from]
+
+## STYLE TAG
+CRITICAL RULE: NEVER use artist names, band names, or any proper nouns in this JSON. AI music generators like Suno flag and reject artist/band names. Describe only sonic qualities, genre, instruments, mood, and feel.
+
+GOOD examples: "grunge rock, down-tuned guitars, heavy dark riff, thick distortion" or "outlaw country rock, acoustic guitar, baritone male vocal, open highway feel" or "dense funk rock, layered keys and guitar, falsetto vocal, psychedelic R&B"
+BAD examples: "Soundgarden style" or "Chris Cornell vocals" or "Prince-influenced" — these will be rejected.
+
+[JSON only] {"style": "...", "tempo": "...", "key": "...", "mood": "...", "vocal_style": "..."}`;
+
+async function callOracle(thought, apiKey, bandPrompt) {
+  const systemPrompt = bandPrompt + BASE_FORMAT;
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: thought }]
+    })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return data.content[0].text;
+}
+
+// ══ PARSE ══
+function extract(text, header, nextHeader) {
+  const pattern = nextHeader
+    ? new RegExp(`## ${header}\\n([\\s\\S]*?)(?=## ${nextHeader})`)
+    : new RegExp(`## ${header}\\n([\\s\\S]*)$`);
+  const m = text.match(pattern);
+  return m ? m[1].trim() : '';
+}
+
+function parseOracleResponse(text, thought, customDesc) {
+  const oracleSpeaks     = extract(text, 'ORACLE SPEAKS',      'SONG TITLE');
+  const title            = extract(text, 'SONG TITLE',         'LYRICS WITH CHORDS');
+  const lyricsWithChords = extract(text, 'LYRICS WITH CHORDS', 'SONG NOTES');
+  const songNotes        = extract(text, 'SONG NOTES',         'GUITAR TAB');
+  const guitarTab        = extract(text, 'GUITAR TAB',         'CLEAN LYRICS');
+  const cleanLyrics      = extract(text, 'CLEAN LYRICS',       'STYLE TAG');
+  let styleTag = {};
+  try {
+    const j1 = text.lastIndexOf('{'); const j2 = text.lastIndexOf('}') + 1;
+    if (j1 !== -1) styleTag = JSON.parse(text.substring(j1, j2));
+  } catch(e) {
+    styleTag = { style:'rock', tempo:'70 BPM', key:'G', mood:'raw', vocal_style:'powerful' };
+  }
+  return { oracleSpeaks, title, lyricsWithChords, songNotes, guitarTab, cleanLyrics, styleTag, band: activeBand?.name, thought: thought || '', customDesc: customDesc || '' };
+}
+
+// ══ POPULATE ══
+function populateOutput(pkg) {
+  document.getElementById('song-title-header').textContent = pkg.title || 'Untitled';
+  document.getElementById('oracle-prose-text').textContent = pkg.oracleSpeaks;
+
+  const lyricsEl = document.getElementById('lyrics-chords-text');
+  lyricsEl.innerHTML = '';
+  pkg.lyricsWithChords.split('\n').forEach(line => {
+    const span = document.createElement('span');
+    if (/^\[.*\]$/.test(line.trim())) {
+      span.className = 'section-marker'; span.textContent = line;
+    } else if (/^[A-G][#bmaj79sus2\/\s]*$/.test(line.trim()) || /^[A-G][^\s]*([\s]+[A-G][^\s]*)+$/.test(line.trim())) {
+      span.className = 'chord-line'; span.textContent = line + '\n';
+    } else { span.textContent = line + '\n'; }
+    lyricsEl.appendChild(span);
+  });
+
+  const notesEl = document.getElementById('notes-grid');
+  notesEl.innerHTML = '';
+  pkg.songNotes.split('\n').filter(l => l.trim() && l.includes(':')).forEach(line => {
+    const idx = line.indexOf(':');
+    notesEl.innerHTML += `<div class="note-row"><div class="note-label">${line.substring(0,idx).trim()}</div><div class="note-value">${line.substring(idx+1).trim()}</div></div>`;
+  });
+  const feelLines = pkg.songNotes.split('\n').filter(l => l.trim() && !l.includes(':') && l.trim() !== 'SONG NOTES');
+  if (feelLines.length) notesEl.innerHTML += `<div class="note-row" style="flex-direction:column"><div class="note-label" style="width:100%;border-right:none;border-bottom:1px solid var(--iron)">FEEL</div><div class="note-value" style="font-family:'Crimson Pro',serif;font-style:italic;font-size:14px;line-height:1.8">${feelLines.join(' ')}</div></div>`;
+
+  const tabEl = document.getElementById('guitar-tab-text');
+  tabEl.innerHTML = '';
+  let currentSection = '', tabLines = [];
+  const flushSection = () => {
+    if (currentSection || tabLines.length) {
+      const div = document.createElement('div');
+      div.innerHTML = `${currentSection ? `<span class="tab-section-name">${currentSection}</span>` : ''}<div class="tab-block">${tabLines.join('\n')}</div>`;
+      tabEl.appendChild(div);
+    }
+  };
+  pkg.guitarTab.split('\n').forEach(line => {
+    if (/^#{1,3}\s/.test(line) || (/^(intro|verse|chorus|bridge|outro|riff|picking|tab|section)/i.test(line.trim()) && !line.startsWith('e|') && !line.startsWith('B|'))) {
+      flushSection(); currentSection = line.replace(/^#+\s*/,'').trim().toUpperCase(); tabLines = [];
+    } else { tabLines.push(escapeHtml(line)); }
+  });
+  flushSection();
+
+  document.getElementById('clean-lyrics-text').textContent = pkg.cleanLyrics;
+  const s = pkg.styleTag;
+  // Build tight Suno style tag — under 100 chars, no lyrics, no vocal_style
+  const sunoRaw = `${s.style||'rock'}, instrumental, no vocals, ${s.tempo||'70 BPM'}, key of ${s.key||'G'}, ${s.mood||'raw'}`;
+  document.getElementById('suno-tags').textContent = sunoRaw.length > 200 ? sunoRaw.substring(0,197)+'...' : sunoRaw;
+  // Suno title
+  const sunoTitleEl = document.getElementById('suno-title');
+  if (sunoTitleEl) sunoTitleEl.textContent = pkg.title || 'Untitled';
+  switchTab('oracle');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══ DROPBOX ══
+async function getAccessToken() {
+  try {
+    const params = new URLSearchParams({
+      grant_type:    'refresh_token',
+      refresh_token: DROPBOX_REFRESH_TOKEN,
+      client_id:     DROPBOX_APP_KEY,
+      client_secret: DROPBOX_APP_SECRET,
+    });
+    const res = await fetch('https://api.dropbox.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    });
+    if (!res.ok) throw new Error(`Token refresh failed: ${res.status}`);
+    const data = await res.json();
+    dbAccessToken = data.access_token;
+    setDropboxStatus(true);
+  } catch (err) {
+    console.error('Dropbox token refresh error:', err);
+    setDropboxStatus(false);
+  }
+}
+
+function setDropboxStatus(connected) {
+  const dot = document.getElementById('db-dot');
+  const txt = document.getElementById('db-status-text');
+  if (connected) {
+    dot.className = 'db-dot connected';
+    txt.textContent = 'Dropbox connected — songs auto-save';
+  } else {
+    dot.className = 'db-dot';
+    txt.textContent = 'Dropbox — reconnecting...';
+  }
+}
+
+async function saveToDropbox() {
+  if (!dbAccessToken) { await getAccessToken(); if (!dbAccessToken) { showToast('Dropbox unavailable', 'error'); return; } }
+  if (!songPackage) return;
+
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.disabled = true; saveBtn.textContent = '...';
+
+  try {
+    const sanitize = (s, n) => (s||'Untitled').replace(/[^a-zA-Z0-9\-_ ]/g,'').trim().replace(/\s+/g,'_').replace(/_+/g,'_').substring(0,n)||'Untitled';
+    const safe     = sanitize(songPackage.title, 40);
+    const bandSafe = sanitize(songPackage.band || 'Oracle', 20);
+    const ts      = new Date().toISOString().substring(0,10);
+    const folder  = `${DROPBOX_FOLDER}/${bandSafe}/${safe}_${ts}`;
+    const files   = {
+      [`${safe}_lead_sheet.txt`]:   buildLeadSheet(songPackage),
+      [`${safe}_guitar_tab.txt`]:   buildTabFile(songPackage),
+      [`${safe}_clean_lyrics.txt`]: buildCleanLyrics(songPackage),
+      [`${safe}_suno_prompt.txt`]:  buildSunoFile(songPackage),
+      [`${safe}_oracle_speaks.txt`]: buildOracleSpeaks(songPackage),
+    };
+    for (const [filename, content] of Object.entries(files)) {
+      await uploadToDropbox(`${folder}/${filename}`, content);
+    }
+    showToast('Saved to Dropbox ✓', 'success');
+  } catch (err) {
+    if (err.message.includes('401')) {
+      await getAccessToken();
+      showToast('Refreshed — tap Save again', 'error');
+    } else { showToast('Save failed: ' + err.message, 'error'); }
+  } finally { saveBtn.disabled = false; saveBtn.textContent = 'SAVE'; }
+}
+
+async function uploadToDropbox(path, content) {
+  const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization':   `Bearer ${dbAccessToken}`,
+      'Content-Type':    'application/octet-stream',
+      'Dropbox-API-Arg': JSON.stringify({ path, mode:'overwrite', autorename:false, mute:true })
+    },
+    body: content
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error_summary || `HTTP ${res.status}`);
+  }
+}
+
+// ══ FILE BUILDERS ══
+function buildLeadSheet(pkg) {
+  const band = pkg.band ? `  Band: ${pkg.band}\n` : '';
+  return ['='.repeat(60),`  ${(pkg.title||'UNTITLED').toUpperCase()}`,band+'  Written by Outlaw Oracle','='.repeat(60),'','── THE ORACLE SPEAKS ──','',pkg.oracleSpeaks,'','─'.repeat(60),'','── SONG NOTES ──','',pkg.songNotes,'','─'.repeat(60),'','── LYRICS & CHORDS ──','',pkg.lyricsWithChords].join('\n');
+}
+function buildTabFile(pkg) {
+  return ['='.repeat(60),`  ${(pkg.title||'UNTITLED').toUpperCase()} — GUITAR TAB`,'='.repeat(60),'',pkg.songNotes,'','─'.repeat(60),'',pkg.guitarTab].join('\n');
+}
+function buildSunoFile(pkg) {
+  const s = pkg.styleTag;
+  return [
+    'SUNO AI STYLE PROMPT',
+    '='.repeat(40),
+    '',
+    `Band: ${pkg.band||'Outlaw Oracle'}`,
+    '',
+    'STYLE TAGS — paste into Suno Style of Music field:',
+    `${s.style||'rock'}, instrumental, no vocals, ${s.tempo||'70 BPM'}, key of ${s.key||'G'}, ${s.mood||'raw'}`,
+    '',
+    'Check INSTRUMENTAL — no vocals.',
+    '',
+    '─'.repeat(40),
+    '',
+    'SONG NOTES — for reference when setting up Suno:',
+    '',
+    pkg.songNotes,
+  ].join('\n');
+}
+
+function buildCleanLyrics(pkg) {
+  const title = (pkg.title || 'UNTITLED').toUpperCase();
+  const divider = '─'.repeat(title.length);
+  return [title, divider, '', pkg.cleanLyrics].join('\n');
+}
+
+function buildOracleSpeaks(pkg) {
+  const title = (pkg.title || 'UNTITLED').toUpperCase();
+  const band  = pkg.band ? `Band: ${pkg.band}` : '';
+  const center = (str, width) => {
+    const pad = Math.max(0, Math.floor((width - str.length) / 2));
+    return ' '.repeat(pad) + str;
+  };
+  const width = 60;
+  const customVoice = pkg.customDesc ? pkg.customDesc : 'None';
+  const thought = pkg.thought ? pkg.thought : '';
+  return [
+    '='.repeat(width),
+    center(title, width),
+    band ? center(band, width) : '',
+    '='.repeat(width),
+    '',
+    '── THE ORACLE SPEAKS ──',
+    '',
+    pkg.oracleSpeaks,
+    '',
+    '='.repeat(width),
+    '',
+    '── SOURCE INPUTS ──',
+    '',
+    `BAND:                  ${pkg.band || 'Outlaw Oracle'}`,
+    `CUSTOM VOICE/CHARACTER: ${customVoice}`,
+    '',
+    'THOUGHT:',
+    thought,
+    '',
+    '='.repeat(width),
+    '',
+    '\u00A9 2026 Erik Lange. All rights reserved.',
+  ].filter(l => l !== null).join('\n');
+}
+
+// ══ API KEY ══
+function toggleSettings() {
+  const panel = document.getElementById('settings-panel');
+  panel.classList.toggle('open');
+}
+
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (key) {
+    localStorage.setItem('oo_api_key', key);
+    showToast('API key saved', 'success');
+    document.getElementById('settings-panel').classList.remove('open');
+  }
+}
+
+// ══ UI ══
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  if (name !== 'loading' && window._loadingInterval) clearInterval(window._loadingInterval);
+}
+
+function switchTab(name) {
+  const tabs = ['oracle','lyrics','notes','tab','clean','suno'];
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.tab')[idx]?.classList.add('active');
+  document.getElementById(`tab-${name}`)?.classList.add('active');
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+const loadingPhrases = ['Finding the emotional spine...','Forging the lyric...','Choosing the instrument...','Writing the chord chart...','Tabbing the riff...','Naming what others won\'t...'];
+
+function animateLoading() {
+  let i = 0, pct = 0;
+  const statusEl = document.getElementById('loading-status');
+  const barEl    = document.getElementById('loading-bar');
+  barEl.style.width = '0%';
+  window._loadingInterval = setInterval(() => {
+    i = (i+1) % loadingPhrases.length;
+    pct = Math.min(pct+14, 88);
+    statusEl.textContent = loadingPhrases[i];
+    barEl.style.width = pct + '%';
+  }, 1400);
+}
+</script>
+</body>
+</html>
